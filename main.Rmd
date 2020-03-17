@@ -1,0 +1,88 @@
+library(dplyr)
+library("glmnet")
+
+```{r}
+setwd("C:\\Users\\anind\\Google Drive\\Coursework\\Econ_220E_Metrics\\Proj\\Our code")
+```
+
+```{r}
+seed_num <- 100
+```
+factor
+```{r}
+allfactors = read.csv(file = "C:\\Users\\anind\\Google Drive\\Coursework\\Econ_220E_Metrics\\Proj\\data\\factors.csv")
+date = allfactors[,1]
+rf = allfactors[,2]
+factors = allfactors[,3:152]
+
+L = nrow(date)
+P = ncol(factors)
+```
+test portfolios
+```{r}
+port_3x2 = read.csv(file = "C:\\Users\\anind\\Google Drive\\Coursework\\Econ_220E_Metrics\\Proj\\data\\port_3x2.csv", header = FALSE)
+port_3x2 = port_3x2[,2:781] # Skipping the date column from data
+port_3x2 = port_3x2 - rf
+```
+other information
+```{r}
+summary =  read.csv(file = "C:\\Users\\anind\\Google Drive\\Coursework\\Econ_220E_Metrics\\Proj\\data\\summary.csv")
+factorname = summary[,'Row']
+factorname_full = summary[,'Descpription']
+year_pub = summary[,'Year']
+year_end = summary[,'Year_end']
+
+port_3x2_id = read.csv(file = "C:\\Users\\anind\\Google Drive\\Coursework\\Econ_220E_Metrics\\Proj\\data\\port_3x2_id.csv")
+
+mkt_ind = match('MktRf', factorname)
+smb_ind = match('SMB', factorname)
+hml_ind = match('HML', factorname)
+```
+form a smaller set of portfolios for bivariate sorted porfolios
+
+```{r}
+kk <- 10 # minimum number of stocks in a portfolio
+include_3x2 = which(port_3x2_id[,"min_stk6"]> 10)
+port_3x2b <- data.frame(matrix(nrow = 498,)) #initializing an empty dataframe
+
+for(i in 1:150)
+{
+  if(is.element(i, include_3x2))
+    { 
+      port_3x2b =  cbind(port_3x2b,port_3x2[,(i*6-5):(i*6)])
+    }
+
+  }
+port_3x2b = port_3x2b[,2:751] # deleting the first garbage column
+```
+
+```{r}
+Ri = port_3x2b
+```
+ Something about tuning must be done here
+ 
+ [Matlab] load tune_main.mat
+ 
+ Choose control factors before 2012
+```{r}
+ContrlList = which(year_pub < 2012)
+ControlFactor = factors[, ContrlList]
+FF3 = factors[,c(mkt_ind,smb_ind, hml_ind)]
+``` 
+Test factors since 2012
+```{r}
+TestList = which(year_pub >= 2012)
+TestFactor = factors[,TestList]
+```
+Test factor individually
+```{r}
+j <- 2
+gt = t(data.matrix(TestFactor[,j])) # Converting dataframe into matrix and taking transpose
+ht = t(data.matrix(ControlFactor)) 
+```
+use the average tuning parameter from 200 randome seeds
+```{r}
+# MATLAB: model_ds = ....
+#PriceRiskOLS <- function(Ri,gt,ht)
+  
+```

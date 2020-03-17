@@ -1,0 +1,33 @@
+---
+title: "PriceRiskOLS"
+author: "Andy"
+date: "3/16/2020"
+output: html_document
+---
+Some data import for function checking (Remove later!!)
+```{r}
+Ri = read.csv(file = "C:\\Users\\anind\\Google Drive\\Coursework\\Econ_220E_Metrics\\Proj\\Our code\\temp1.csv")
+```
+
+```{r}
+PriceRiskOLS <- function(Ri,gt,ht)
+  # data information
+  n <- ncol(Ri) # number of assets
+  t <- nrow(Ri) # number of time periods (Note that this is different from original code)
+  d = nrow(gt) # number of factors in gt (should be 1)
+  p = nrow(ht)# number of factors in ht
+  
+  cov_h <- matrix(NaN, nrow = n, ncol = p)
+  
+  for(nn in 1:n){
+    temp = cov(cbind(Ri[,nn], t(ht) ))
+    cov_h[nn,] = temp[1, 2:(p+1)]
+  }
+  
+  cov_g <- matrix(NaN, nrow = n, ncol = d)
+  
+  for(nn in 1:n){
+    temp = cov(cbind(Ri[,nn], t(gt) ))
+    cov_g[nn,] = temp[1, 2:(d+1)]
+  }
+```
