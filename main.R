@@ -30,7 +30,7 @@ P <- ncol(factors)
 
 # test porfolios
 port_5x5 <- read.csv("port_5x5.csv", header = FALSE) 
-port_3x2 <- port_3x2[,2:ncol(port_5x5)]                                   # remove date col
+port_5x5 <- port_5x5[,2:ncol(port_5x5)]                                   # remove date col
 port_5x5 <- port_5x5 - rf                                                 # excess returns
 
 port_3x2 <- read.csv("port_3x2.csv", header = FALSE)
@@ -38,7 +38,7 @@ port_3x2 <- port_3x2[,2:ncol(port_3x2)]
 port_3x2 <- port_3x2 - rf
 
 port_202 <- read.csv("port202.csv", header = FALSE)
-port_202 <- port_202[0,2:ncol(port_202)]/100
+port_202 <- port_202[,2:ncol(port_202)]/100
 port_202 <- port_202 - rf
 
 # other information
@@ -69,16 +69,6 @@ for (i in 1:P) {
 
 Ri <- port_3x2b # test asset
 
-# robust to missing data
-if (sum(is.nan(Ri)) > 0) {print("missing data in returns Ri - will append to zero")}
-if (sum(is.nan(gt)) > 0) {print("missing data in factors gt - will append to zero")}
-if (sum(is.nan(ht)) > 0) {print("missing data in factors ht - will append to zero")}
-
-# impute zero for missing observations
-Ri[is.nan(Ri)] <- 0
-gt[is.nan(gt)] <- 0
-ht[is.nan(ht)] <- 0
-
 
 # load tune_center for 200 randome seeds selected by cross-validations
 # For each random seed in 1:200, we run a cross-validation and find the
@@ -108,6 +98,18 @@ for (j in 1:length(TestList)) {
   disp(j)
   gt <- t(TestFactor[,j]) # test factor
   ht <- t(ControlFactor)  # control factor
+  
+  # robust to missing data
+  if (sum(is.na(Ri)) > 0) {print("missing data in returns Ri - will append to zero")}
+  if (sum(is.nan(gt)) > 0) {print("missing data in factors gt - will append to zero")}
+  if (sum(is.nan(ht)) > 0) {print("missing data in factors ht - will append to zero")}
+  
+  # impute zero for missing observations
+  Ri[is.na(Ri)] <- 0
+  gt[is.nan(gt)] <- 0
+  ht[is.nan(ht)] <- 0
+  
+  
   # use the average tuning parameter from 200 random seeds
   model_ds  <- DS(t(Ri), gt, ht, -log(tune_center[j,1]), -log(tune_center[j,2]),1,seed_num)
   tstat_ds  <- model_ds$lambag_ds/model_ds$se_ds
@@ -139,7 +141,7 @@ for (j in 1:length(TestList)) {
   result <- rbind(result,temp)
 }
 
-disp(factorname_full[model_ds$sel1])
+show(factorname_full[model_ds$sel1])
 
 # extract outputs
 lambda_ds  <- result$lambda_ds * 10000 # bp
@@ -164,7 +166,7 @@ result <- data.frame(TestList,factornames,lambda_ds,tstat_ds,lambda_ss,tstat_ss,
                      tstat_FF3,lambda_ols,tstat_ols,avg,tstat_avg)
 
 # display the table
-disp(result)
+show(result)
 
 # output Table as a CSV file
 out_file <- "/Users/victorsellemi/Documents/main.csv"
