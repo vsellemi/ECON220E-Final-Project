@@ -47,7 +47,7 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
   lambda0 <- exp(-seq(0,35,35/100))
   
   # 1st selection in cross-sectional regression
-  model1 <- glmnet(x = cov_h*diag(penalty),
+  model1 <- glmnet(x = cov_h%*%diag(penalty),
                    y = ER,
                    family = 'gaussian',
                    standardize = FALSE,
@@ -56,13 +56,13 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
   model1_est <- coef.glmnet(model1)
   sel1 <- t( which(model1_est[2:(p+1)] != 0) )
   
-  err1 <- mean( (ER - cbind(t(rep(1,n),cov_h*diag(penalty)))*model1_est)*2 )
+  err1 <- mean( (ER - cbind(t(rep(1,n),cov_h%*%diag(penalty)))%*%model1_est)^2 )
   
   # 2nd selection
   sel2 <- vector()
   err2 <- matrix(nrow = d, ncol = 1)
   for (i in 1:d) {
-    model2 <- glmnet(x = cov_h*diag(penalty),
+    model2 <- glmnet(x = cov_h%*%diag(penalty),
                      y = cov_g[,i],
                      family = 'gaussian',
                      standardize = FALSE,
@@ -70,7 +70,7 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
                      alpha = alpha)
     model2_est <- coef.glmnet(model2)
     sel2 <- rbind(sel2, which(model2_est[2:length(model2_est)]!=0))
-    err2[i] <- mean( (cov_g[,i]- cbind(t(rep(1,n)), cov_h*diag(penalty))*model2_est)^2)
+    err2[i] <- mean( (cov_g[,i]- cbind(t(rep(1,n)), cov_h%*%diag(penalty))%*%model2_est)^2)
   }
   sel2 <- t(unique(sel2))
   
@@ -137,7 +137,7 @@ TCSV <- function(Ri, gt, ht, lambda, Kfld, Jrep, alpha, seednum) {
                         standardize = TRUE, 
                         lambda = lambda,
                         alpha = alpha)
-      gt_pred <- t(ht_test)*model3$beta
+      gt_pred <- t(ht_test)%*%model3$beta
       
       LL3  <- length(model3$lambda)
       temp <- (repmat(t(gt_test),n=1,m=LL3) - gt_pred)^2
@@ -184,31 +184,31 @@ infer <- function(Ri, gt, ht, sel1, sel2, sel3){
   cov_h <- tmp2[(p+1):nrow(tmp2),1:p]
   
   ER    <- rowMeans(Ri)
-  M0    <- eye(n) - t(rep(1,n))* inv(rep(1,n)*t(rep(1,n)))*rep(1,n)
+  M0    <- eye(n) - t(rep(1,n))%*% inv(rep(1,n)%*%t(rep(1,n)))%*%rep(1,n)
   
   nomissing <- which(colSums(is.nan(rbind(ht,gt))) == 0)
   Lnm       <- length(nomissing)
   select    <- union(sel1,sel2)
   
   X <- cbind(cov_g, cov_h[,select]) 
-  lambda_full <- inv(t(X)*M0*X)*(t(X)*M0*ER)
+  lambda_full <- inv(t(X)%*%M0%*%X)%*%(t(X)%*%M0%*%ER)
   lambdag     <- lambda_full[1:d]
   rm(X)
   
   # for double selection inference: AVAR
   zthat = matrix(NaN, nrow = d, ncol = Lnm)
   for (i in 1:d){
-    M_mdl <- eye(Lnm) - t(ht[sel3,nomissing])*inv(ht[sel3,nomissing]*t(ht[sel3,nomissing]))*ht[sel3,nomissing]
-    zthat[i,] = M_mdl*t(gt[i,nomissing])
+    M_mdl <- eye(Lnm) - t(ht[sel3,nomissing])%*%inv(ht[sel3,nomissing]%*%t(ht[sel3,nomissing]))%*%ht[sel3,nomissing]
+    zthat[i,] = M_mdl%*%t(gt[i,nomissing])
     rm(M_mdl)
   }
-  Sigmazhat <- zthat*t(zthat) / Lnm
+  Sigmazhat <- zthat%*%t(zthat) / Lnm
   temp2     <- matrix(0,nrow = d, ncol = d)
   ii <- 0 
   for (l in nomissing) {
     ii <- ii + 1
-    mt    <- 1 - t(lambda_full)*rbind(gt[1:d,l],ht[select,l])
-    temp2 <- (mt^2) * (inv(Sigmazhat)*zthat[,ii]*t(zthat[,ii])*inv(Sigmazhat))
+    mt    <- 1 - t(lambda_full)%*%rbind(gt[1:d,l],ht[select,l])
+    temp2 <- (mt^2) %*% (inv(Sigmazhat)%*%zthat[,ii]%*%t(zthat[,ii])%*%inv(Sigmazhat))
   }
   avar_lambdag <- diag(temp2)/Lnm
   se <- sqrt(avar_lambdag/Lnm)
@@ -216,9 +216,9 @@ infer <- function(Ri, gt, ht, sel1, sel2, sel3){
   
   # scaled lambda for DS
   vt <- rbind(gt[,nomissing], ht[select,nomissing])
-  V_bar <- vt - rowMeans(vt,2)*rep(1,Lnm)
-  var_v <- V_bar*t(V_bar) / Lnm
-  gamma <- diag(var_v)*lambda_full
+  V_bar <- vt - rowMeans(vt,2)%*%rep(1,Lnm)
+  var_v <- V_bar%*%t(V_bar) / Lnm
+  gamma <- diag(var_v)%*%lambda_full
   rm(list = c("X", "vt", "V_bar", "var_v", "lambda_full"))
   
   output <- list("lambdag" = lambdag,
