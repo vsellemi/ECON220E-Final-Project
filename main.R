@@ -7,9 +7,13 @@
 #Date  : March 2020
 #----------------------------------------------------------------------------- 
 #%%
-# main results
 
-rm(list=ls())
+library("glmnet")
+library("rapportools")
+library("pracma")
+library("matlib")
+
+# main results
 
 main_dir <- "/Users/victorsellemi/Downloads/DoubleLasso"
 data_dir <- "/Users/victorsellemi/Downloads/DoubleLasso/data"
@@ -108,7 +112,6 @@ for (j in 1:length(TestList)) {
   Ri[is.na(Ri)] <- 0
   gt[is.nan(gt)] <- 0
   ht[is.nan(ht)] <- 0
-  
   
   # use the average tuning parameter from 200 random seeds
   model_ds  <- DS(t(Ri), gt, ht, -log(tune_center[j,1]), -log(tune_center[j,2]),1,seed_num)
