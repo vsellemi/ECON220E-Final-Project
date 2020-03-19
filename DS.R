@@ -1,5 +1,3 @@
-rm(list=ls())
-
 library("glmnet")
 library("rapportools")
 library("pracma")
@@ -42,7 +40,7 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
     beta[,i] <- cov_h[,i] / var(ht[i,])
   }
   penalty <- colMeans(beta^2)
-  penalty <- penalty/mean(penalty)   # check dim
+  penalty <- penalty  /mean(penalty)   # check dim
   
   lambda0 <- exp(-seq(0,35,35/100))
   
@@ -55,8 +53,8 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
                    alpha = alpha)
   model1_est <- coef.glmnet(model1)
   sel1 <- t( which(model1_est[2:(p+1)] != 0) )
-  
-  err1 <- mean( (ER - cbind(t(rep(1,n),cov_h%*%diag(penalty)))%*%model1_est)^2 )
+  bob <- vector()
+  err1 <- mean( (ER - cbind(t(rep(1,n)),cov_h%*%diag(penalty))%*%model1_est)^2 )
   
   # 2nd selection
   sel2 <- vector()
@@ -173,7 +171,7 @@ TCSV <- function(Ri, gt, ht, lambda, Kfld, Jrep, alpha, seednum) {
 # -------------------------------------------------------------- #
 
 infer <- function(Ri, gt, ht, sel1, sel2, sel3){
-   ### the function for estimation and inference
+  ### the function for estimation and inference
   if (is.null(dim(Ri))) {n <- length(Ri)} else {n <- dim(Ri)[1]}
   if (is.null(dim(ht))) {p <- length(ht)} else {p <- dim(ht)[1]}
   if (is.null(dim(gt))) {d <- length(gt)} else {d <- dim(gt)[1]}
@@ -225,4 +223,3 @@ infer <- function(Ri, gt, ht, sel1, sel2, sel3){
                  "se" = se,
                  "gamma" = gamma)
 }
-
