@@ -1,12 +1,12 @@
-" 
------------------------------------------------------------------------------ 
-DOUBLE SELECTION LASSO                                
------------------------------------------------------------------------------ 
-Author: Victor Sellemi
-*Based on 2020 Matlab Code of Guanhao Feng, Stefano Giglio and Dacheng Xiu*
-Date  : March 2020
------------------------------------------------------------------------------ 
-"
+#%%
+#----------------------------------------------------------------------------- 
+#DOUBLE SELECTION LASSO                                
+#----------------------------------------------------------------------------- 
+#Author: Victor Sellemi
+#*Based on 2020 Matlab Code of Guanhao Feng, Stefano Giglio and Dacheng Xiu*
+#Date  : March 2020
+#----------------------------------------------------------------------------- 
+#%%
 # main results
 
 rm(list=ls())
@@ -98,7 +98,10 @@ FF3 <- t(factors[,c(mkt_ind,smb_ind,hml_ind)])
 TestList <- which(year_pub >= 2012)
 TestFactor <- factors[,TestList]
 
-result <- vector()
+result <- data.frame(matrix(0,nrow = length(TestList),ncol = 12))
+names(result) <- c("TestList","factornames","lambda_ds","tstat_ds",
+                    "lambda_ss","tstat_ss","lambda_FF3","tstat_FF3",
+                    "lambda_ols","tstat_ols","avg","tstat_avg")
 
 # test factor individually
 for (j in 1:length(TestList)) {
