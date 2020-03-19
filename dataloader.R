@@ -1,7 +1,7 @@
 rm(list=ls())
 
-main_dir = "/Users/victorsellemi/Downloads/DoubleLasso"
-data_dir = "/Users/victorsellemi/Downloads/DoubleLasso/data"
+main_dir <- "/Users/victorsellemi/Downloads/DoubleLasso"
+data_dir <- "/Users/victorsellemi/Downloads/DoubleLasso/data"
 
 # --------------------------------------------------------------------------- #
 
@@ -21,7 +21,7 @@ P <- ncol(factors)
 
 # test porfolios
 port_5x5 <- read.csv("port_5x5.csv", header = FALSE) 
-port_3x2 <- port_3x2[,2:ncol(port_5x5)]                                   # remove date col
+port_5x5 <- port_5x5[,2:ncol(port_5x5)]                                   # remove date col
 port_5x5 <- port_5x5 - rf                                                 # excess returns
 
 port_3x2 <- read.csv("port_3x2.csv", header = FALSE)
@@ -37,7 +37,7 @@ port_3x2 <- port_3x2 - rf
 #port_3x2_seq <- port_3x2_seq - rf
 
 port_202 <- read.csv("port202.csv", header = FALSE)
-port_202 <- port_202[0,2:ncol(port_202)]/100
+port_202 <- port_202[,2:ncol(port_202)]/100
 port_202 <- port_202 - rf
 
 # other information
