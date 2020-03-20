@@ -91,10 +91,9 @@ FF3 <- t(factors[,c(mkt_ind,smb_ind,hml_ind)])
 TestList <- which(year_pub >= 2012)
 TestFactor <- factors[,TestList]
 
-result <- data.frame(matrix(0,nrow = length(TestList),ncol = 12))
-names(result) <- c("TestList","factornames","lambda_ds","tstat_ds",
-                    "lambda_ss","tstat_ss","lambda_FF3","tstat_FF3",
-                    "lambda_ols","tstat_ols","avg","tstat_avg")
+result <- data.frame(matrix(0,nrow = length(TestList),ncol = 10))
+names(result) <- c("tstat_ds", "lambda_ds", "tstat_ss", "lambda_ss", "avg", "tstat_avg",
+                   "lambda_ols", "tstat_ols", "lambda_FF3", "tstat_FF3")
 
 # test factor individually
 for (j in 1:length(TestList)) {
@@ -137,10 +136,21 @@ for (j in 1:length(TestList)) {
   tstat_avg <- avg/std(gt)*sqrt(sum(!is.nan(gt)))
   
   # combine the results in a table (data frame)
-  temp <- data.frame(tstat_ds, lambda_ds, tstat_ss, lambda_ss, avg, tstat_avg,
-                     lambda_ols, tstat_ols, lambda_FF3, tstat_FF3)
+  #temp <- data.frame(tstat_ds, lambda_ds, tstat_ss, lambda_ss, avg, tstat_avg,
+  #                   lambda_ols, tstat_ols, lambda_FF3, tstat_FF3)
+  #result[,3:ncol(result)] <- rbind(result[,3:ncol(result)],temp)
+  result$tstat_ds[j]   <- tstat_ds
+  result$lambda_ds[j]  <- lambda_ds
+  result$tstat_ss[j]   <- tstat_ss
+  result$lambda_ss[j]  <- lambda_ss
+  result$avg[j]        <- avg
+  result$tstat_avg[j]  <- tstat_avg
+  result$lambda_ols[j] <- lambda_ols
+  result$tstat_ols[j]  <- tstat_ols
+  result$lambda_FF3[j] <- lambda_FF3  
+  result$tstat_FF3[j]  <- tstat_FF3  
   
-  result[,3:ncol(result)] <- rbind(result[,3:ncol(result)],temp)
+  
 }
 
 show(factorname_full[model_ds$sel1])
