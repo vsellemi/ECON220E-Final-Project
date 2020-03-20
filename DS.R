@@ -9,6 +9,9 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
   ### no cross-validation for 1st and 2nd selections
   
   # INPUT DIMENSIONS: Ri (nxT), ht (pxT), gt (dxT)
+  Ri <- as.matrix(Ri)
+  gt <- as.matrix(gt)
+  ht <- as.matrix(ht)
   
   # dim of g is 1!
   if (is.empty(alpha)) {alpha <- 1}
@@ -24,23 +27,23 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
   ht[is.nan(ht)] <- 0
   
   # data information
-  if (is.null(dim(rf))) {n <- length(Ri)} else {n <- dim(Ri)[1]}
+  if (is.null(dim(Ri))) {n <- length(Ri)} else {n <- dim(Ri)[1]}
   if (is.null(dim(ht))) {p <- length(ht)} else {p <- dim(ht)[1]}
   if (is.null(dim(gt))) {d <- length(gt)} else {d <- dim(gt)[1]}
   
-  tmp1  <- cov(cbind(t(gt), t(Ri)))
-  cov_g <- tmp1[(d+1):nrow(tmp1), 1:d]
+  tmp1  <- cov(cbind(t(gt), t(Ri))) # cov(cbind(gt,t(Ri))) 
+  cov_g <- as.matrix(tmp1[(d+1):nrow(tmp1), 1:d])
   tmp2  <- cov(cbind(t(ht),t(Ri)))
   cov_h <- tmp2[(p+1):nrow(tmp2), 1:p]
   
-  ER    <- rowMeans(Ri)
+  ER    <- as.matrix(rowMeans(Ri))
   
-  beta  <- matrix(nrow = n, ncol = p)
+  beta  <- matrix(0,nrow = n, ncol = p)
   for (i in 1:p) {
-    beta[,i] <- cov_h[,i] / var(ht[i,])
+    beta[,i] <- as.matrix(cov_h[,i] / var(ht[i,]))
   }
   penalty <- colMeans(beta^2)
-  penalty <- penalty  /mean(penalty)   # check dim
+  penalty <- penalty  / mean(penalty)   # check dim
   
   lambda0 <- exp(-seq(0,35,35/100))
   
@@ -50,25 +53,27 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
                    family = 'gaussian',
                    standardize = FALSE,
                    lambda = exp(-tune1),
-                   alpha = alpha)
+                   alpha = alpha,
+                   intercept = TRUE)
   model1_est <- coef.glmnet(model1)
   sel1 <- t( which(model1_est[2:(p+1)] != 0) )
-  bob <- vector()
-  err1 <- mean( (ER - cbind(t(rep(1,n)),cov_h%*%diag(penalty))%*%model1_est)^2 )
+
+  err1 <- mean(as.matrix( (ER - cbind(rep(1,n),cov_h%*%diag(penalty))%*%model1_est)^2 ))
   
   # 2nd selection
   sel2 <- vector()
-  err2 <- matrix(nrow = d, ncol = 1)
+  err2 <- matrix(0,nrow = d, ncol = 1)
   for (i in 1:d) {
     model2 <- glmnet(x = cov_h%*%diag(penalty),
                      y = cov_g[,i],
                      family = 'gaussian',
                      standardize = FALSE,
                      lambda = exp(-tune2),
-                     alpha = alpha)
+                     alpha = alpha,
+                     intercept = TRUE)
     model2_est <- coef.glmnet(model2)
-    sel2 <- rbind(sel2, which(model2_est[2:length(model2_est)]!=0))
-    err2[i] <- mean( (cov_g[,i]- cbind(t(rep(1,n)), cov_h%*%diag(penalty))%*%model2_est)^2)
+    sel2       <- rbind(sel2, which(model2_est[2:length(model2_est)]!=0))
+    err2[i]    <- mean(as.matrix( (cov_g[,i] - cbind(rep(1,n), cov_h%*%diag(penalty))%*%model2_est)^2))
   }
   sel2 <- t(unique(sel2))
   
@@ -118,16 +123,16 @@ TCSV <- function(Ri, gt, ht, lambda, Kfld, Jrep, alpha, seednum) {
   
   for (j in 1:Jrep) {
     set.seed(seednum + j)
-    indices <- sample(1:Kfld,T)
+    indices <- sample(1:Kfld,T,replace = TRUE)
     for (k in 1:Kfld) {
       test  <- (indices == k)
       train <- (indices != k)
       
-      ht_train <- ht[,intersect(train,nomissing)]
-      gt_train <- gt[,intersect(train,nomissing)]
+      ht_train <- ht[,train & nomissing]
+      gt_train <- t(as.matrix(gt))[,train & nomissing]
       
       ht_test <- ht[,test]
-      gt_test <- gt[,test]
+      gt_test <- t(as.matrix(gt))[,test]
       model3  <- glmnet(x = t(ht_train),
                         y = t(gt_train),
                         family = 'gaussian',
@@ -136,13 +141,14 @@ TCSV <- function(Ri, gt, ht, lambda, Kfld, Jrep, alpha, seednum) {
                         lambda = lambda,
                         alpha = alpha)
       gt_pred <- t(ht_test)%*%model3$beta
+      gt_test <- as.matrix(gt_test)
       
       LL3  <- length(model3$lambda)
-      temp <- (repmat(t(gt_test),n=1,m=LL3) - gt_pred)^2
+      temp <- (repmat(gt_test,n=1,m=LL3) - gt_pred)^2
       temp[is.na(temp)] <- 0
-      cvm[1:LL3,k,j] <- colMeans(temp)
+      cvm3[1:LL3,k,j] <- colMeans(temp)
     }
-    cvm33 <- cbind[cvm33,cvm3[,,j]]
+    cvm33 <- cbind(cvm33,cvm3[,,j])
   }
   cv_sd3  <- std(t(cvm33)) / sqrt(Kfld*Jrep)
   cvm333  <- rowMeans(cvm33)
@@ -161,7 +167,7 @@ TCSV <- function(Ri, gt, ht, lambda, Kfld, Jrep, alpha, seednum) {
                    lambda = lambda[c(l3_1se,l_sel3)],
                    alpha = alpha)
   sel3 <- which(model3$beta[,2] != 0)
-  sel3_1se <- which(model3.beta[,1] != 0)
+  sel3_1se <- which(model3$beta[,1] != 0)
   output <- list("sel3" = sel3, "lambda3" = lambda[l_sel3],
                  "sel3_1se" = sel3_1se, "lambda3_1se" = lambda[l3_1se])
   return(output)
@@ -182,7 +188,8 @@ infer <- function(Ri, gt, ht, sel1, sel2, sel3){
   cov_h <- tmp2[(p+1):nrow(tmp2),1:p]
   
   ER    <- rowMeans(Ri)
-  M0    <- eye(n) - t(rep(1,n))%*% inv(rep(1,n)%*%t(rep(1,n)))%*%rep(1,n)
+  ones <- as.matrix(rep(1,n))
+  M0    <- eye(n) - ones%*% inv(t(ones)%*%ones)%*%t(ones)
   
   nomissing <- which(colSums(is.nan(rbind(ht,gt))) == 0)
   Lnm       <- length(nomissing)
@@ -197,7 +204,7 @@ infer <- function(Ri, gt, ht, sel1, sel2, sel3){
   zthat = matrix(NaN, nrow = d, ncol = Lnm)
   for (i in 1:d){
     M_mdl <- eye(Lnm) - t(ht[sel3,nomissing])%*%inv(ht[sel3,nomissing]%*%t(ht[sel3,nomissing]))%*%ht[sel3,nomissing]
-    zthat[i,] = M_mdl%*%t(gt[i,nomissing])
+    zthat[i,] <- M_mdl%*%as.matrix(gt[i,nomissing])
     rm(M_mdl)
   }
   Sigmazhat <- zthat%*%t(zthat) / Lnm
@@ -205,8 +212,8 @@ infer <- function(Ri, gt, ht, sel1, sel2, sel3){
   ii <- 0 
   for (l in nomissing) {
     ii <- ii + 1
-    mt    <- 1 - t(lambda_full)%*%rbind(gt[1:d,l],ht[select,l])
-    temp2 <- (mt^2) %*% (inv(Sigmazhat)%*%zthat[,ii]%*%t(zthat[,ii])%*%inv(Sigmazhat))
+    mt    <- 1 - t(lambda_full)%*%rbind(as.matrix(gt[1:d,l]),as.matrix(ht[select,l]))
+    temp2 <- temp2 <- (mt^2) %*% (inv(Sigmazhat)%*%zthat[,ii]%*%t(zthat[,ii])%*%inv(Sigmazhat))
   }
   avar_lambdag <- diag(temp2)/Lnm
   se <- sqrt(avar_lambdag/Lnm)
@@ -214,10 +221,10 @@ infer <- function(Ri, gt, ht, sel1, sel2, sel3){
   
   # scaled lambda for DS
   vt <- rbind(gt[,nomissing], ht[select,nomissing])
-  V_bar <- vt - rowMeans(vt,2)%*%rep(1,Lnm)
+  V_bar <- vt - as.matrix(rowMeans(vt))%*%t(as.matrix(rep(1,Lnm)))
   var_v <- V_bar%*%t(V_bar) / Lnm
   gamma <- diag(var_v)%*%lambda_full
-  rm(list = c("X", "vt", "V_bar", "var_v", "lambda_full"))
+  rm(list = c( "vt", "V_bar", "var_v", "lambda_full"))
   
   output <- list("lambdag" = lambdag,
                  "se" = se,
