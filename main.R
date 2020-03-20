@@ -114,7 +114,7 @@ for (j in 1:length(TestList)) {
   
   # use the average tuning parameter from 200 random seeds
   model_ds  <- DS(t(Ri), gt, ht, -log(tune_center[j,1]), -log(tune_center[j,2]),1,seed_num)
-  tstat_ds  <- model_ds$lambag_ds/model_ds$se_ds
+  tstat_ds  <- model_ds$lambdag_ds/model_ds$se_ds
   lambda_ds <- model_ds$gamma_ds[1]
   
   # Single-Selection results, replace with a huge tune2
@@ -129,7 +129,7 @@ for (j in 1:length(TestList)) {
   
   # only control FF3 by OLS
   model_FF3 <- PriceRisk_OLS(t(Ri), gt, FF3)
-  tstat_FF3 <- model_FF3$lambag_ols/model_FF3$se_ols
+  tstat_FF3 <- model_FF3$lambdag_ols/model_FF3$se_ols
   lambda_FF3 <- model_FF3$lambda_ols[1]
   
   # time series average
@@ -140,7 +140,7 @@ for (j in 1:length(TestList)) {
   temp <- data.frame(tstat_ds, lambda_ds, tstat_ss, lambda_ss, avg, tstat_avg,
                      lambda_ols, tstat_ols, lambda_FF3, tstat_FF3)
   
-  result <- rbind(result,temp)
+  result <- rbind(result[,3:ncol(result)],temp)
 }
 
 show(factorname_full[model_ds$sel1])
