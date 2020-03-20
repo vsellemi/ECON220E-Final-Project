@@ -140,7 +140,7 @@ for (j in 1:length(TestList)) {
   temp <- data.frame(tstat_ds, lambda_ds, tstat_ss, lambda_ss, avg, tstat_avg,
                      lambda_ols, tstat_ols, lambda_FF3, tstat_FF3)
   
-  result <- rbind(result[,3:ncol(result)],temp)
+  result[,3:ncol(result)] <- rbind(result[,3:ncol(result)],temp)
 }
 
 show(factorname_full[model_ds$sel1])
