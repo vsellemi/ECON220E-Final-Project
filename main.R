@@ -73,7 +73,6 @@ for (i in 1:P) {
 
 Ri <- port_3x2b # test asset
 
-
 # load tune_center for 200 randome seeds selected by cross-validations
 # For each random seed in 1:200, we run a cross-validation and find the
 # best tuning parameter.
