@@ -221,9 +221,9 @@ for (j in 1:length(TestList)) {
   
   # impute zero for missing observations
   
-  Ri[is.na(Ri)] <- 0
+  #Ri[is.na(Ri)] <- 0
   
-  gt[is.nan(gt)] <- 0
+  #gt[is.nan(gt)] <- 0
   
  # ht[is.nan(ht)] <- 0
   
