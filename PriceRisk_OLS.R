@@ -46,9 +46,9 @@ PriceRisk_OLS <- function(Ri,gt,ht) {
   
   # impute zero for missing observations
   
-  Ri[is.nan(Ri)] <- 0
+  #Ri[is.nan(Ri)] <- 0
   
-  gt[is.nan(gt)] <- 0
+  #gt[is.nan(gt)] <- 0
   
   #  ht[is.nan(ht)] <- 0
   
