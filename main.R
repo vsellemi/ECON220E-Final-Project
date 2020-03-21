@@ -197,9 +197,9 @@ names(result) <- c("tstat_ds", "lambda_ds", "tstat_ss", "lambda_ss", "avg", "tst
 
 # test factor individually
 
-#for (j in 1:length(TestList)) {
+for (j in 1:length(TestList)) {
 
-for (j in 1:2) {
+#for (j in 1:2) {
   
   disp(j)
   
