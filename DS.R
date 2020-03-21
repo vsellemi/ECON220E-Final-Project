@@ -24,7 +24,7 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
   
   gt <- as.matrix(gt)
   
-#  ht <- as.matrix(ht)
+  ht <- as.matrix(ht)
   
   
   
@@ -46,7 +46,7 @@ DS <- function(Ri, gt, ht, tune1, tune2, alpha, seednum){
   
   # impute zero for missing observations
   
-  Ri[is.nan(Ri)] <- 0
+  #Ri[is.nan(Ri)] <- 0
   
   #gt[is.nan(gt)] <- 0
   
