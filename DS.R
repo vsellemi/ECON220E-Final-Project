@@ -430,7 +430,9 @@ infer <- function(Ri, gt, ht, sel1, sel2, sel3){
     
     mt    <- 1 - t(lambda_full)%*%rbind(as.matrix(gt[1:d,l]),as.matrix(ht[select,l]))
     
-    temp2 <- temp2 + (mt^2) %*% (inv(Sigmazhat)%*%zthat[,ii]%*%t(zthat[,ii])%*%inv(Sigmazhat))
+    mt = mt[1,1]                                                                     #converting matrix to scalar 
+    
+    temp2 <- temp2 + (mt^2)*(inv(Sigmazhat)%*%zthat[,ii]%*%t(zthat[,ii])%*%inv(Sigmazhat))
     
   }
   
