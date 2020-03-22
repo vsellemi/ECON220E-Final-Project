@@ -21,6 +21,10 @@ T <- 240
 
 d <- 3
 
+# Load rwal world asset data (to be used in calibration)
+Ri <- port_3x2b # test asset
+Ri = Ri[,2:ncol(Ri)]
+
 
 set.seed(69) # for reproducability
 
@@ -126,7 +130,7 @@ Betah  <- Ch %*% inv(Sigmah) # (nxp)(pxp)
 
 # Monte Carlo Simulations (Repeat 2000 times)
 
-nsim <- 2
+nsim <- 100
 
 simresult <- data.frame(matrix(0, ncol = 1, nrow = 3))
 names(simresult) <- c("lambda_ds")
