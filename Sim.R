@@ -132,10 +132,12 @@ Betah  <- Ch %*% inv(Sigmah) # (nxp)(pxp)
 
 nsim <- 100
 
-simresult <- data.frame(matrix(0, ncol = 1, nrow = 3))
-names(simresult) <- c("lambda_ds")
+estlambda <- data.frame(matrix(0, ncol = 3, nrow = nsim))
+tstatlambda <- data.frame(matrix(0, ncol = 3, nrow = nsim))
 
 for (m in 1: nsim){
+  
+  disp(m)
 
   Sigmau <- matrix(1,nrow = n, ncol = n)   #variance of sigmau disturbances
   
@@ -185,8 +187,6 @@ for (m in 1: nsim){
   
   for (j in 1:3) {
     
-    disp(j)
-    
     gt <- t(Gt[,j]) # test factor
     
     ht <- t(Ht)  # control factor
@@ -208,10 +208,13 @@ for (m in 1: nsim){
     
     #result$tstat_ds[j]   <- tstat_ds
     
-    simresult$lambda_ds[j]  <-  simresult$lambda_ds[j] + lambda_ds  
+    estlambda[m,j]  =  lambda_ds
+    tstatlambda[m,j]  =  tstat_ds
   
   }
 }
 
+lambda_ds1 = colMeans(estlambda)
+tstat_ds1 = colMeans(estlambda)
 
-simresult$lambda_ds = simresult$lambda_ds/nsim 
+#simresult$lambda_ds = simresult$lambda_ds/nsim 
