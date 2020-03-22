@@ -22,6 +22,8 @@ T <- 240
 d <- 3
 
 
+set.seed(69) # for reproducability
+
 # Load tune center
 
 tune_center <- matrix(c(0.000000018,  1.8e-8, 1.8e-8, 1.80E-08, 1.80E-08, 1.80E-08, 1.80E-08,  1.80E-08, 1.80E-08,  1.80E-08,  1.80E-08, 1.80E-08, 1.80E-08, 1.80E-08,  1.80E-08, 0.00000000000176,4.30E-13, 8.11E-12, 3.25E-11,6.28E-12, 2.94E-11 
@@ -29,11 +31,14 @@ tune_center <- matrix(c(0.000000018,  1.8e-8, 1.8e-8, 1.80E-08, 1.80E-08, 1.80E-
                         , 2.45E-11, 2.52E-12, 2.44E-10, 7.04E-11  ), nrow=15, ncol =2)
 
 
+
+# (1) simulate Ce (nxd) and Ch1 (nx4) independently from multivariate normals
+
 # must calibrate parameters using Fama-French 5 factors:
 
 # calibrate: chi, eta, lambda, Sigmaz, Ce, Ch1, and Sigmah
 
-temp3 = cov(cbind(allfactors[c("MktRf","HML", "SMB", "UMD", "cash", "HML_Devil", "gma")], Ri))
+temp3 = cov(cbind(allfactors[c("MktRf","HML", "SMB", "UMD", "cash", "HML_Devil", "gma")], Ri)) # Using the cov matrix for the FF factors
 Ch1 = temp3[8: 107, 1:4]
 Ce = temp3[8:107, 5:7]
 
@@ -45,11 +50,6 @@ Ce = temp3[8:107, 5:7]
 
 #cov_Ch1   <- diag(rep(1,4))
 
-
-set.seed(69) # for reproducability
-
-# (1) simulate Ce (nxd) and Ch1 (nx4) independently from multivariate normals
-
 #Ce  <- mvrnorm(n, mean_Ce, cov_Ce)
 
 #Ch1 <- mvrnorm(n, mean_Ch1, cov_Ch1)
@@ -58,7 +58,7 @@ set.seed(69) # for reproducability
 
 # (2) calculate Ch2, initialize theta0 (p-4)x1, theta1 (p-4)x4, and Ceps nx(p-4) ~ N(m,S) 
 
-theta0 <- matrix(1, nrow = p-4, ncol = 1) # Using a matrix of ones
+theta0 <- matrix(0, nrow = p-4, ncol = 1) # Using a matrix of ones
 theta1 <- matrix(1, nrow = p-4, ncol = 4)
 
 mean_Ceps  <- as.matrix(rep(0,p-4))
@@ -80,7 +80,8 @@ Ch2    <- matrix(1, nrow = n, ncol = 1) %*% t(theta0) + Ch1 %*% t(theta1) + Ceps
 Ch  <- cbind(Ch1, Ch2)  # (nxp)
 
 xi = t(matrix(cbind(as.matrix(1), t(as.matrix(rep(0,d-1)))), nrow = d, ncol = 1)) # no loadings on redundant factors
-chi = t(rbind(matrix(1, nrow = 4, ncol = d), matrix(0, nrow = (p-4), ncol = d)))
+#chi = t(rbind(matrix(1, nrow = 4, ncol = d), matrix(0, nrow = (p-4), ncol = d)))
+chi = t(cbind(rbind(as.matrix(rep(1,4)), as.matrix(rep(0,p-4))), matrix(0, nrow = p, ncol = 1),matrix(1, nrow = p, ncol = 1))) # no loading of the useless factor on Ch
 
 Cg  <- matrix(1, nrow = n, ncol = 1) %*% xi + Ch %*% t(chi) + Ce  # Cg ~ (nxd)
 
@@ -134,6 +135,8 @@ Ht = matrix(ncol = p)
 Gt = matrix(ncol = d)
 
 # Draw T data points to create dataset 
+
+
 for (i in 1:T){
 
 
