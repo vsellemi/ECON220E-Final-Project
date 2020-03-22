@@ -152,7 +152,7 @@ for (m in 1: nsim){
   for (i in 1:T){
   
   
-    ut     <- dt(sample(1:1000, n, replace = TRUE)/1000,df = 5) #??    # draw (nx1) ut from student t distribution with 5 deg of freedom and Sigmau var
+    ut     <- t(rmvt(1, sigma = diag(100), df = 5)) #??    # draw (nx1) ut from student t distribution with 5 deg of freedom and Sigmau var
     
     
     # (7) generate ht, zt -- >
@@ -207,7 +207,6 @@ for (m in 1: nsim){
     #result[,3:ncol(result)] <- rbind(result[,3:ncol(result)],temp)
     
     #result$tstat_ds[j]   <- tstat_ds
-    
     estlambda[m,j]  =  lambda_ds
     tstatlambda[m,j]  =  tstat_ds
   
@@ -216,5 +215,7 @@ for (m in 1: nsim){
 
 lambda_ds1 = colMeans(estlambda)
 tstat_ds1 = colMeans(estlambda)
+
+hist(estlambda[,1])
 
 #simresult$lambda_ds = simresult$lambda_ds/nsim 
