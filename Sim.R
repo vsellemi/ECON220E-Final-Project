@@ -126,79 +126,88 @@ Betah  <- Ch %*% inv(Sigmah) # (nxp)(pxp)
 
 # Monte Carlo Simulations (Repeat 2000 times)
 
-Sigmau <- matrix(1,nrow = n, ncol = n)   #variance of sigmau disturbances
+nsim <- 2
 
+simresult <- data.frame(matrix(0, ncol = 1, nrow = 3))
+names(simresult) <- c("lambda_ds")
 
-Rt = matrix(nrow = 100)
-Ht = matrix(ncol = p)
-Gt = matrix(ncol = d)
+for (m in 1: nsim){
 
-# Draw T data points to create dataset 
-
-
-for (i in 1:T){
-
-
-  ut     <- dt(sample(1:1000, n, replace = TRUE)/1000,df = 5) #??    # draw (nx1) ut from student t distribution with 5 deg of freedom and Sigmau var
+  Sigmau <- matrix(1,nrow = n, ncol = n)   #variance of sigmau disturbances
   
   
-  # (7) generate ht, zt -- >
+  Rt = matrix(nrow = 100)
+  Ht = matrix(ncol = p)
+  Gt = matrix(ncol = d)
   
-  mean_ht  <- as.matrix(rep(0,p))
+  # Draw T data points to create dataset 
   
-  ht  <- as.matrix(mvrnorm(1, mean_ht, Sigmah)) 
-  #ht = t(temp2)                        
   
-  mean_zt <- as.matrix(rep(0,d))
+  for (i in 1:T){
   
-  zt <- as.matrix(mvrnorm(1, mean_zt, Sigmaz))
   
-  gt <- as.matrix(eta)%*%as.matrix(ht) + zt
+    ut     <- dt(sample(1:1000, n, replace = TRUE)/1000,df = 5) #??    # draw (nx1) ut from student t distribution with 5 deg of freedom and Sigmau var
+    
+    
+    # (7) generate ht, zt -- >
+    
+    mean_ht  <- as.matrix(rep(0,p))
+    
+    ht  <- as.matrix(mvrnorm(1, mean_ht, Sigmah)) 
+    #ht = t(temp2)                        
+    
+    mean_zt <- as.matrix(rep(0,d))
+    
+    zt <- as.matrix(mvrnorm(1, mean_zt, Sigmaz))
+    
+    gt <- as.matrix(eta)%*%as.matrix(ht) + zt
+    
+    rt     <- Ert + Betag %*% gt + Betah %*% ht  + as.matrix(ut)
+    
+    Rt = cbind(Rt, rt)
+    Ht = rbind(Ht, t(ht))
+    Gt = rbind(Gt, t(gt))
   
-  rt     <- Ert + Betag %*% gt + Betah %*% ht  + as.matrix(ut)
+  }
+            
+  Rt = Rt[, 2:ncol(Rt)]
+  Ht = Ht[2:nrow(Ht),]
+  Gt = Gt[2:nrow(Gt),]
   
-  Rt = cbind(Rt, rt)
-  Ht = rbind(Ht, t(ht))
-  Gt = rbind(Gt, t(gt))
-
+  
+  # Enter data in DS model:
+  
+  # test factor individually
+  
+  for (j in 1:3) {
+    
+    disp(j)
+    
+    gt <- t(Gt[,j]) # test factor
+    
+    ht <- t(Ht)  # control factor
+    
+    
+    # use the average tuning parameter from 200 random seeds
+    
+    model_ds  <- DS(Rt, gt, ht, -log(tune_center[j,1]), -log(tune_center[j,2]),1,seed_num)
+    
+    tstat_ds  <- model_ds$lambdag_ds/model_ds$se_ds
+    
+    lambda_ds <- model_ds$gamma_ds[1]
+  
+    # combine the results in a table (data frame)
+    
+    #temp <- data.frame(tstat_ds, lambda_ds)
+    
+    #result[,3:ncol(result)] <- rbind(result[,3:ncol(result)],temp)
+    
+    #result$tstat_ds[j]   <- tstat_ds
+    
+    simresult$lambda_ds[j]  <-  simresult$lambda_ds[j] + lambda_ds  
+  
+  }
 }
-          
-Rt = Rt[, 2:ncol(Rt)]
-Ht = Ht[2:nrow(Ht),]
-Gt = Gt[2:nrow(Gt),]
 
 
-# Enter data in DS model:
-
-# test factor individually
-
-for (j in 1:3) {
-  
-  disp(j)
-  
-  gt <- t(Gt[,j]) # test factor
-  
-  ht <- t(Ht)  # control factor
-  
-  
-  # use the average tuning parameter from 200 random seeds
-  
-  model_ds  <- DS(Rt, gt, ht, -log(tune_center[j,1]), -log(tune_center[j,2]),1,seed_num)
-  
-  tstat_ds  <- model_ds$lambdag_ds/model_ds$se_ds
-  
-  lambda_ds <- model_ds$gamma_ds[1]
-
-  # combine the results in a table (data frame)
-  
-  #temp <- data.frame(tstat_ds, lambda_ds)
-  
-  #result[,3:ncol(result)] <- rbind(result[,3:ncol(result)],temp)
-  
-  result$tstat_ds[j]   <- tstat_ds
-  
-  result$lambda_ds[j]  <- lambda_ds
-
-}
-
-
+simresult$lambda_ds = simresult$lambda_ds/nsim 
