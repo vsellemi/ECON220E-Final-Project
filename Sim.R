@@ -189,5 +189,16 @@ for (j in 1:3) {
   
   lambda_ds <- model_ds$gamma_ds[1]
 
+  # combine the results in a table (data frame)
+  
+  #temp <- data.frame(tstat_ds, lambda_ds)
+  
+  #result[,3:ncol(result)] <- rbind(result[,3:ncol(result)],temp)
+  
+  result$tstat_ds[j]   <- tstat_ds
+  
+  result$lambda_ds[j]  <- lambda_ds
+
 }
+
 
