@@ -90,11 +90,10 @@ Cg  <- matrix(1, nrow = n, ncol = 1) %*% xi + Ch %*% t(chi) + Ce  # Cg ~ (nxd)
 # (4) Cz
 
 #eta <- matrix(0, nrow = d, ncol = p)
+#eta = rbind(matrix(1, nrow= 1, ncol = p), matrix(0, nrow = 2, ncol = p)) 
 
-eta = rbind(matrix(1, nrow= 1, ncol = p), matrix(0, nrow = 2, ncol = p)) # Calibrated to ensure 0 loadings of gt on h1t
-
+eta = cbind(matrix(1, nrow = 3, ncol = 4), matrix(1, nrow = 3, ncol = p-4)) # No loading of g on h2
 Cz  <- Cg - Ch %*% t(eta) # (nxd) - (nxp)(pxd) 
-
 
 
 # (5) Er
