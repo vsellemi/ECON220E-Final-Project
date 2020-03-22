@@ -92,7 +92,7 @@ Cg  <- matrix(1, nrow = n, ncol = 1) %*% xi + Ch %*% t(chi) + Ce  # Cg ~ (nxd)
 #eta <- matrix(0, nrow = d, ncol = p)
 #eta = rbind(matrix(1, nrow= 1, ncol = p), matrix(0, nrow = 2, ncol = p)) 
 
-eta = cbind(matrix(1, nrow = 3, ncol = 4), matrix(1, nrow = 3, ncol = p-4)) # No loading of g on h2
+eta = cbind(matrix(1, nrow = 3, ncol = 4), matrix(0, nrow = 3, ncol = p-4)) # No loading of g on h2
 Cz  <- Cg - Ch %*% t(eta) # (nxd) - (nxp)(pxd) 
 
 
@@ -170,18 +170,24 @@ Gt = Gt[2:nrow(Gt),]
 
 # Enter data in DS model:
 
-model_ds  <- DS(Rt, t(Gt), t(Ht), -log(tune_center[1,1]), -log(tune_center[1,2]),1,seed_num)
+# test factor individually
 
-tstat_ds  <- model_ds$lambdag_ds/model_ds$se_ds
+for (j in 1:3) {
+  
+  disp(j)
+  
+  gt <- t(Gt[,j]) # test factor
+  
+  ht <- t(Ht)  # control factor
+  
+  
+  # use the average tuning parameter from 200 random seeds
+  
+  model_ds  <- DS(Rt, gt, ht, -log(tune_center[j,1]), -log(tune_center[j,2]),1,seed_num)
+  
+  tstat_ds  <- model_ds$lambdag_ds/model_ds$se_ds
+  
+  lambda_ds <- model_ds$gamma_ds[1]
 
-lambda_ds <- model_ds$gamma_ds
+}
 
-result <- data.frame(matrix(0,nrow = length(TestList),ncol = 10))
-
-names(result) <- c("tstat_ds", "lambda_ds", "tstat_ss", "lambda_ss", "avg", "tstat_avg",
-                   
-                   "lambda_ols", "tstat_ols", "lambda_FF3", "tstat_FF3")
-
-result$tstat_ds[1]   <- tstat_ds
-
-result$lambda_ds[1]  <- lambda_ds
