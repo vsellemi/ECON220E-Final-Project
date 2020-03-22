@@ -225,6 +225,6 @@ tstat_ds1 = colMeans(tstatlambda)
 
 
 par(mar=c(1,1,1,1))
-hist(estlambda[,1])
+hist(tstatlambda[,1], col = "grey")
 
 #simresult$lambda_ds = simresult$lambda_ds/nsim 
