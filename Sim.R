@@ -26,7 +26,7 @@ Ri <- port_3x2b # test asset
 Ri = Ri[,2:ncol(Ri)]
 
 
-set.seed(69) # for reproducability
+#set.seed(69) # for reproducability
 
 # Load tune center
 
@@ -42,34 +42,39 @@ tune_center <- matrix(c(0.000000018,  1.8e-8, 1.8e-8, 1.80E-08, 1.80E-08, 1.80E-
 
 # calibrate: chi, eta, lambda, Sigmaz, Ce, Ch1, and Sigmah
 
-temp3 = cov(cbind(allfactors[c("MktRf","HML", "SMB", "UMD", "cash", "HML_Devil", "gma")], Ri)) # Using the cov matrix for the FF factors
-Ch1 = temp3[8: 107, 1:4]
-Ce = temp3[8:107, 5:7]
+# temp3 = cov(cbind(allfactors[c("MktRf","HML", "SMB", "UMD", "cash", "HML_Devil", "gma")], Ri)) # Using the cov matrix for the FF factors
+# Ch1 = temp3[8: 107, 1:4]
+# Ce = temp3[8:107, 5:7]
 
-#mean_Ce  <- as.matrix(rep(0,d))
+# mean_Ce  <- as.matrix(rep(0,d))
+# 
+# cov_Ce   <- diag(rep(1,d))
+# 
+# mean_Ch1 <- as.matrix(rep(0,4))
+# 
+# cov_Ch1   <- diag(rep(1,4))
+# 
+# Ce  <- mvrnorm(n, mean_Ce, cov_Ce)
+# 
+# Ch1 <- mvrnorm(n, mean_Ch1, cov_Ch1)
 
-#cov_Ce   <- diag(rep(1,d))
+Ce <- as.matrix(read.csv("Ce.csv", header = FALSE, sep = ""))
+Ce = Ce[1:n,1:d]
 
-#mean_Ch1 <- as.matrix(rep(0,4))
-
-#cov_Ch1   <- diag(rep(1,4))
-
-#Ce  <- mvrnorm(n, mean_Ce, cov_Ce)
-
-#Ch1 <- mvrnorm(n, mean_Ch1, cov_Ch1)
-
-
-
+Ch1<- as.matrix(read.csv("Ch.csv", header = FALSE, sep = ""))
+Ch1= Ch1[1:n, 1:4]
 # (2) calculate Ch2, initialize theta0 (p-4)x1, theta1 (p-4)x4, and Ceps nx(p-4) ~ N(m,S) 
 
 theta0 <- matrix(0, nrow = p-4, ncol = 1) # Using a matrix of ones
-theta1 <- matrix(1, nrow = p-4, ncol = 4)
+#theta1 <- matrix(1, nrow = p-4, ncol = 4)
+theta1 <- as.matrix(read.csv("theta1.csv", header = FALSE, sep = ""))
+theta1 = theta1[1:(p-4), 1:4]
 
 mean_Ceps  <- as.matrix(rep(0,p-4))
 
 cov_Ceps   <- diag(rep(1,p-4))
 
-Ceps   <-  mvrnorm(n, mean_Ceps, cov_Ceps)
+Ceps   <-  mvrnorm(n, mean_Ceps, cov_Ceps) # multiplying by 100 as returns is in %
 
 Ch2    <- matrix(1, nrow = n, ncol = 1) %*% t(theta0) + Ch1 %*% t(theta1) + Ceps
 
@@ -83,7 +88,7 @@ Ch2    <- matrix(1, nrow = n, ncol = 1) %*% t(theta0) + Ch1 %*% t(theta1) + Ceps
 
 Ch  <- cbind(Ch1, Ch2)  # (nxp)
 
-xi = t(matrix(cbind(as.matrix(1), t(as.matrix(rep(0,d-1)))), nrow = d, ncol = 1)) # no loadings on redundant factors
+xi = t(matrix(cbind(as.matrix(0), t(as.matrix(rep(0,d-1)))), nrow = d, ncol = 1)) # no loadings on redundant factors
 #chi = t(rbind(matrix(1, nrow = 4, ncol = d), matrix(0, nrow = (p-4), ncol = d)))
 chi = t(cbind(rbind(as.matrix(rep(1,4)), as.matrix(rep(0,p-4))), matrix(0, nrow = p, ncol = 1),matrix(1, nrow = p, ncol = 1))) # no loading of the useless factor on Ch
 
@@ -96,13 +101,15 @@ Cg  <- matrix(1, nrow = n, ncol = 1) %*% xi + Ch %*% t(chi) + Ce  # Cg ~ (nxd)
 #eta <- matrix(0, nrow = d, ncol = p)
 #eta = rbind(matrix(1, nrow= 1, ncol = p), matrix(0, nrow = 2, ncol = p)) 
 
-eta = cbind(matrix(1, nrow = 3, ncol = 4), matrix(0, nrow = 3, ncol = p-4)) # No loading of g on h2
+#eta = cbind(matrix(1, nrow = 3, ncol = 4), matrix(0, nrow = 3, ncol = p-4)) # No loading of g on h2
+#eta = as.matrix(read.csv("eta.csv", header = FALSE, sep = ""))
+eta = cbind(matrix(c(-0.1176,0.0554, 0.4451, 0.1067,0,0.3,0, 0.6,0,0,0,0), nrow = 3, ncol = 4), matrix(0, nrow = 3, ncol = p-4))
 Cz  <- Cg - Ch %*% t(eta) # (nxd) - (nxp)(pxd) 
 
 
 # (5) Er
 
-gamma0  <- matrix(1, nrow = 1, ncol =1)
+gamma0  <- matrix(0, nrow = 1, ncol =1)
 
 lambdag <- matrix(c(1,0,0), nrow = 3, ncol = 1)  # one useful g, one useless, one redundant
 
@@ -116,8 +123,13 @@ Ert  <- matrix(1, nrow = n, ncol = 1) %*% gamma0 + Cg %*% lambdag + Ch %*% lambd
 
 #Sigmaz <- matrix(1,nrow = d, ncol = d)
 
-Sigmaz = diag(rep(1,d))
-Sigmah = diag(rep(1,p))
+#Sigmaz = diag(rep(1,d))*10
+#Sigmaz <- as.matrix(read.csv("Sigmaz.csv", header = FALSE, sep = ""))*10^4
+Sigmaz <- matrix(c(0.000189642681612157,0,0,0,0.000189642681612157,0,0,0,0.000189642681612157), nrow = 3, ncol = 3)*10^4
+
+#Sigmah = diag(rep(1,p))*10
+Sigmah <- as.matrix(read.csv("Sigmah.csv", header = FALSE, sep = ""))*10^4
+Sigmah = Sigmah[1:25,1:25]
 
 Betag  <- Cz %*% inv(Sigmaz) # (nxd)(dxd)  #use pracma for inverse!!
 
@@ -130,41 +142,45 @@ Betah  <- Ch %*% inv(Sigmah) # (nxp)(pxp)
 
 # Monte Carlo Simulations (Repeat 2000 times)
 
+
+
 nsim <- 100
 
 estlambda <- data.frame(matrix(0, ncol = 3, nrow = nsim))
 tstatlambda <- data.frame(matrix(0, ncol = 3, nrow = nsim))
+coverage <- data.frame(matrix(0, ncol = 3, nrow = 3))
 
 for (m in 1: nsim){
+  
+  set.seed(m)
   
   disp(m)
 
   Sigmau <- matrix(1,nrow = n, ncol = n)   #variance of sigmau disturbances
   
   
-  Rt = matrix(nrow = 100)
+  Rt = matrix(nrow = n)
   Ht = matrix(ncol = p)
   Gt = matrix(ncol = d)
   
   # Draw T data points to create dataset 
   
-  
   for (i in 1:T){
   
   
-    ut     <- t(rmvt(1, sigma = diag(100), df = 5)) #??    # draw (nx1) ut from student t distribution with 5 deg of freedom and Sigmau var
-    
+    ut     <- t(rmvt(1, sigma = diag(n), df = 5)) #??    # draw (nx1) ut from student t distribution with 5 deg of freedom and Sigmau var
+    #disp(ut[5])
     
     # (7) generate ht, zt -- >
     
     mean_ht  <- as.matrix(rep(0,p))
     
-    ht  <- as.matrix(mvrnorm(1, mean_ht, Sigmah)) 
+    ht  <- as.matrix(mvrnorm(1, mean_ht, Sigmah)) *10
     #ht = t(temp2)                        
     
-    mean_zt <- as.matrix(rep(0,d))
+    mean_zt <- as.matrix(rep(0,d)) 
     
-    zt <- as.matrix(mvrnorm(1, mean_zt, Sigmaz))
+    zt <- as.matrix(mvrnorm(1, mean_zt, Sigmaz)) *10
     
     gt <- as.matrix(eta)%*%as.matrix(ht) + zt
     
@@ -179,6 +195,10 @@ for (m in 1: nsim){
   Rt = Rt[, 2:ncol(Rt)]
   Ht = Ht[2:nrow(Ht),]
   Gt = Gt[2:nrow(Gt),]
+  
+  disp(Rt[1,3])
+  disp(Ht[3,1])
+  disp(Gt[3,1])
   
   
   # Enter data in DS model:
@@ -199,6 +219,21 @@ for (m in 1: nsim){
     tstat_ds  <- model_ds$lambdag_ds/model_ds$se_ds
     
     lambda_ds <- model_ds$gamma_ds[1]
+    
+    
+    model_ss  <- DS(Rt, gt, ht, -log(tune_center[j,1]), -log(1),1,seed_num)
+    
+    tstat_ss  <- model_ss$lambdag_ds/model_ss$se_ds
+    
+    lambda_ss <- model_ss$gamma_ds[1]
+    
+    
+    model_ols  <- PriceRisk_OLS(Rt, gt, ht)
+    
+    tstat_ols  <- model_ols$lambdag_ols/model_ols$se_ols
+    
+    lambda_ols <- model_ols$lambda_ols[1]
+    
   
     # combine the results in a table (data frame)
     
@@ -209,13 +244,34 @@ for (m in 1: nsim){
     #result$tstat_ds[j]   <- tstat_ds
     estlambda[m,j]  =  lambda_ds
     tstatlambda[m,j]  =  tstat_ds
-  
+    if ((lambdag[j,1]> (lambda_ds - 1.96* model_ds$se_ds)) & (lambdag[j,1]< (lambda_ds + 1.96* model_ds$se_ds)))
+      {
+        coverage[1,j] = coverage[1,j] + 1
+        disp(1)
+    }
+    
+    if ((lambdag[j,1]> (lambda_ss - 1.96* model_ss$se_ds)) & (lambdag[j,1]< (lambda_ss + 1.96* model_ss$se_ds)))
+    {
+      coverage[2,j] = coverage[2,j] + 1
+      disp(1)
+    }
+    
+    if ((lambdag[j,1]> (lambda_ols - 1.96* model_ols$se_ols)) & (lambdag[j,1]< (lambda_ols + 1.96* model_ols$se_ols)))
+    {
+      coverage[3,j] = coverage[3,j] + 1
+      disp(1)
+    }
+    
+    
+    
   }
 }
 
 lambda_ds1 = colMeans(estlambda)
-tstat_ds1 = colMeans(estlambda)
+tstat_ds1 = colMeans(tstatlambda)
+coverage = coverage/ nsim
 
-hist(estlambda[,1])
+par(mar=c(1,1,1,1))
+hist(tstatlambda[,1], col = "grey")
 
 #simresult$lambda_ds = simresult$lambda_ds/nsim 
